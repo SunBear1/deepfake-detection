@@ -1,10 +1,12 @@
-FROM python:3.11.2-alpine as build-stage
+FROM python:3.11.2-slim as build-stage
 
 WORKDIR /generator
 
 RUN pip install --upgrade pip
 
-RUN apk --no-cache add curl
+RUN apt-get update
+
+RUN apt-get install -y curl
 
 COPY requirements.txt requirements.txt
 
