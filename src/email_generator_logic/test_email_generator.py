@@ -1,8 +1,8 @@
-import mailGenerator
+import email_generator
 
 
 NUMBEROFEMAILS = 10
-MAILCENTRAL = mailGenerator.OneSecMail()
+MAILCENTRAL = email_generator.OneSecMail()
 
 
 MAILCENTRAL.create_new_emails(NUMBEROFEMAILS)
