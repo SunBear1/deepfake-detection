@@ -241,3 +241,11 @@ fabric.properties
 /.idea/misc.xml
 /.idea/modules.xml
 /.idea/vcs.xml
+/.idea/git_toolbox_prj.xml
+
+# Terraform
+/src/infra/.terraform/
+/src/infra/.terraform.lock.hcl
+/src/infra/terraform.tfstate
+/src/infra/terraform.tfstate.backup
+/src/infra/errored.tfstate
