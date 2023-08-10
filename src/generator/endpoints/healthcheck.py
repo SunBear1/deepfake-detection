@@ -20,4 +20,4 @@ async def healthcheck():
     Healthcheck endpoint
     """
     logger.info(f"app healthcheck performed")
-    return Response(status_code=status.HTTP_200_OK)
+    return Response(status_code=status.HTTP_200_OK, content="I'm healthy")

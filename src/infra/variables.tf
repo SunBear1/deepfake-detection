@@ -4,14 +4,14 @@ variable "resource_group_properties" {
     location = string
   })
   default = {
-    name     = "ProjektBadawczyPlaygroundRG"
+    name     = "ProjektBadawczyRG"
     location = "eastus2"
   }
 }
 
 variable "storage_account_name" {
     type = string
-    default = "projektbadawczy"
+    default = "projektbadawczystorage"
 }
 
 variable "storage_container_name" {

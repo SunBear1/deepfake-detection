@@ -1,12 +1,12 @@
-resource "azurerm_resource_group" "resource-group" {
+resource "azurerm_resource_group" "main-rg" {
   location = var.resource_group_properties.location
   name     = var.resource_group_properties.name
   tags = var.default_tags
 }
 
-resource "azurerm_storage_account" "storage-account" {
+resource "azurerm_storage_account" "main-sa" {
   name                     = var.storage_account_name
-  resource_group_name      = azurerm_resource_group.resource-group.name
+  resource_group_name      = azurerm_resource_group.main-rg.name
   location                 = var.resource_group_properties.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
@@ -29,9 +29,9 @@ resource "azurerm_storage_account" "storage-account" {
   }
 }
 
-resource "azurerm_storage_container" "storage-container" {
+resource "azurerm_storage_container" "main-storage-container" {
   name                  = var.storage_container_name
-  storage_account_name  = azurerm_storage_account.storage-account.name
+  storage_account_name  = azurerm_storage_account.main-sa.name
   container_access_type = "container"
   metadata = var.default_tags
 }
