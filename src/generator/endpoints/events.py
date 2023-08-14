@@ -1,7 +1,6 @@
 import json
 import logging
 from datetime import datetime
-from typing import Dict
 
 from fastapi import APIRouter
 from pydantic import BaseModel
