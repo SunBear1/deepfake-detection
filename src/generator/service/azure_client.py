@@ -2,7 +2,10 @@ import os
 
 from azure.storage.blob import BlobServiceClient
 
-AZURE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net")
+AZURE_STORAGE_ACCOUNT = os.getenv("AZURE_STORAGE_ACCOUNT")
+AZURE_STORAGE_KEY = os.getenv("AZURE_STORAGE_KEY")
+AZURE_CONNECTION_STRING = (f"DefaultEndpointsProtocol=https;AccountName={AZURE_STORAGE_ACCOUNT};"
+                           f"AccountKey={AZURE_STORAGE_KEY};EndpointSuffix=core.windows.net")
 
 
 class AzureStorageClient:
