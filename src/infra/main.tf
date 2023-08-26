@@ -29,9 +29,17 @@ resource "azurerm_storage_account" "main-sa" {
   }
 }
 
-resource "azurerm_storage_container" "main-storage-container" {
-  name                  = var.storage_container_name
+resource "azurerm_storage_container" "output-storage-container" {
+  name                  = var.output_container_name
   storage_account_name  = azurerm_storage_account.main-sa.name
   container_access_type = "container"
   metadata = var.default_tags
 }
+
+resource "azurerm_storage_container" "input-storage-container" {
+  name                  = var.input_container_name
+  storage_account_name  = azurerm_storage_account.main-sa.name
+  container_access_type = "container"
+  metadata = var.default_tags
+}
+

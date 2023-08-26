@@ -14,9 +14,14 @@ variable "storage_account_name" {
     default = "projektbadawczystorage"
 }
 
-variable "storage_container_name" {
+variable "output_container_name" {
     type = string
-    default = "deepfake-dataset"
+    default = "deepfake-audio-dataset"
+}
+
+variable "input_container_name" {
+    type = string
+    default = "raw-audio-dataset"
 }
 
 variable "default_tags" {

@@ -23,7 +23,7 @@ async def healthcheck():
     """
     logger.info(f"app healthcheck performed")
     az_client = AzureStorageClient()
-    if az_client.blob_service_client.get_container_client("deepfake-dataset").exists():
+    if az_client.blob_service_client.get_container_client("deepfake-audio-dataset").exists():
         return Response(status_code=status.HTTP_200_OK, content="I'm healthy")
     else:
         return Response(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content="Can't connect to Azure container")
