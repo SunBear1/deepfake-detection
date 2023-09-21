@@ -3,3 +3,4 @@ fastapi==0.100.0
 pydantic==2.0.3
 starlette==0.27.0
 azure-storage-blob==12.17.0
+elevenlabs==0.2.26
