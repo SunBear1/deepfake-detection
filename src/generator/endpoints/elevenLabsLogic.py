@@ -14,7 +14,7 @@ class ElevenLabsAPI:
 
     def readTexts(self, pathToTextsFile, pathToSavefilesDir, baseFilename) -> None:
         texts = utils.fileTXT_to_list(pathToTextsFile)
-        if self.voice == "":
+        if self.voice == None:
             raise Exception(f'No voice in variable self.voice: {self.voice}')
         for text in texts:
             audio = generate(
@@ -28,7 +28,8 @@ class ElevenLabsAPI:
             )
     
     def listVoices(self) -> list:
-        return voices()      
+        vce = [(v.voice_id, v.name) for v in voices()]
+        return vce      
 
     def setVoice(self, voice) -> None: 
         self.voice = voice
@@ -40,6 +41,8 @@ class ElevenLabsAPI:
             description=description,
             files=voicesMP3s,
         )
+    def getVoice(self):
+        return self.voice
     
     def deleteVoice(self) -> None:
         if self.voice == "":
