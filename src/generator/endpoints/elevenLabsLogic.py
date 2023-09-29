@@ -1,37 +1,35 @@
-from elevenlabs import set_api_key, generate, clone, voices, save
 import requests
 import utils
 import os
+
+from elevenlabs import set_api_key, generate, clone, voices, save
 
 
 class ElevenLabsAPI:
     def __init__(self, apiKey):
         set_api_key(apiKey)
         self.apiKey = apiKey
-        self.voice = ""
-        # Can be only english with parameter: eleven_monolingual_v1
-        self.voiceModel = "eleven_multilingual_v2" 
+        self.voiceModel = "eleven_multilingual_v2"
 
-    def readTexts(self, pathToTextsFile, pathToSavefilesDir, baseFilename) -> None:
-        texts = utils.fileTXT_to_list(pathToTextsFile)
-        if self.voice == None:
-            raise Exception(f'No voice in variable self.voice: {self.voice}')
-        for text in texts:
-            audio = generate(
-                text = text,
-                voice = self.voice,
-                model = self.voiceModel
-            )
-            save(
-                audio=audio,
-                filename = os.path.join(pathToSavefilesDir,baseFilename) + ".mp3"
-            )
-    
+    def readTexts(self, text, voice):
+        audio = generate(text=text, voice=voice, model=self.voiceModel)
+        return audio
+
+    def saveAudio(self, audio, path, filename) -> None:
+        save(audio=audio, filename=os.path.join(path, "generated_" + filename) + ".mp3")
+
     def listVoices(self) -> list:
         vce = [(v.voice_id, v.name) for v in voices()]
-        return vce      
+        return vce
 
-    def setVoice(self, voice) -> None: 
+    def getNameByVoiceID(self, voice_id: str) -> str:
+        vce = [(v.voice_id, v.name) for v in voices()]
+        for voice in vce:
+            if voice[0] == voice_id:
+                return voice[1]
+        return None
+
+    def setVoice(self, voice) -> None:
         self.voice = voice
 
     def createOwnVoice(self, name, pathToVoicesDir, description) -> None:
@@ -41,13 +39,14 @@ class ElevenLabsAPI:
             description=description,
             files=voicesMP3s,
         )
+
     def getVoice(self):
         return self.voice
-    
-    def deleteVoice(self) -> None:
-        if self.voice == "":
-            raise Exception(f'No voice in variable self.voice, no voice has been deleted: {self.voice}')
-        response = requests.delete(url='https://api.elevenlabs.io/v1/voices/{self.voice.id}', headers={'xi-api-key': self.apiKey})
+
+    def deleteVoice(self, voiceID: str) -> None:
+        response = requests.delete(
+            url=f"https://api.elevenlabs.io/v1/voices/{voiceID}",
+            headers={"xi-api-key": self.apiKey},
+        )
         if response.status_code != 200:
-            raise Exception(f'Connection error: {response.status_code}, {response}')
-        
+            raise Exception(f"Connection error: {response.status_code}, {response}")

@@ -1,102 +1,96 @@
-import json
-import logging
-from datetime import datetime
-
-from fastapi import APIRouter, FastAPI, HTTPException, UploadFile, File
-from pydantic import BaseModel
-import elevenLabsLogic
 import os
+import shutil
 
-API_KEY = "a8412809ee48754b006d19396dd7eb40"
+from starlette import status
+from starlette.responses import Response
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 
-# API_KEY = os.getenv("API_KEY")
-# if API_KEY == "":
-#     raise Exception("ElevenLabs API_KEY not set")
+import elevenLabsLogic
+from engine import Engine
+
+API_KEY = os.getenv("API_KEY")
+if API_KEY == "":
+    raise Exception("ElevenLabs API_KEY not set")
 
 testAPI = elevenLabsLogic.ElevenLabsAPI(apiKey=API_KEY)
 
 app = FastAPI()
 
-logger = logging.getLogger("generator")
+engine = Engine()
 
 
-class CreateVoicePayload(BaseModel):
-    name: str
-    audio_file: UploadFile
-    description: str
-
-class SetVoicePayload(BaseModel):
-    selected_voice: str
-
-class ReadTextsPayload(BaseModel):
-    path_to_texts_file: str
-    path_to_save_files_dir: str
-    base_filename: str
-
-
-
-@app.post("/create_voice/")
-async def create_voice(payload: CreateVoicePayload):
+@app.post("/create_voice")
+async def create_voice(file: UploadFile = File(...)):
     try:
-        logger.info("Event grid event with payload {payload.audio_file.filename}")
-        uploaded_file_path = "{os.getcwd()}{os.sep}{payload.audio_file.filename}"
-        file_bytes = await payload.audio_file.read()
-        with open(uploaded_file_path, "wb") as f:
+        directory = os.getcwd() + os.sep + file.filename.split(".")[0]
+        os.makedirs(directory, exist_ok=True)
+        new_filename = os.path.join(directory, file.filename)
+        file_bytes = file.file.read()
+        with open(new_filename, "wb") as f:
             f.write(file_bytes)
 
+        id = engine.get_current_file_id(directory_name="originals")
+        engine.upload_audio_file(
+            blob_name=f"{id}_{file.filename}_ORGN.mp3",
+            audio_df_file=file_bytes,
+            blob_directory="deepfakes",
+        )
+
         testAPI.createOwnVoice(
-            name=payload.name,
-            pathToVoicesDir=uploaded_file_path,
-            description=payload.description
+            name=file.filename,
+            pathToVoicesDir=directory,
+            description=f"{file.filename}",
         )
+        shutil.rmtree(directory)
 
-        os.remove(uploaded_file_path)
-
-        return {"message": "Voice {payload.name} created successfully"}
+        return Response(
+            status_code=status.HTTP_201_CREATED,
+            content=f"Voice {file.filename} created successfully",
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/set_voice/")
-async def set_voice(payload: SetVoicePayload):
-    try:
-        testAPI.setVoice(payload.selected_voice)
-        return {"message": "Voice set successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/delete_voice/")
-async def delete_voice():
-    try:
-        testAPI.deleteVoice()
-        return {"message": "Voice deleted successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/get_voices/")
+@app.get("/get_voices")
 async def list_voices():
     try:
-        voices = testAPI.listVoices()  
-        return {"voices": voices}
+        voices = testAPI.listVoices()
+        return Response(status_code=status.HTTP_200_OK, content={"voices": voices})
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/get_voice_set/")
-async def list_voices():
-    try:
-        voice = testAPI.getVoice()  
-        return {"voice_set": voice}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/read_texts/")
-async def read_texts(payload: ReadTextsPayload):
+@app.post("/delete_voice/{voiceID}")
+async def delete_voice(voiceID: str):
     try:
-        testAPI.readTexts(
-            pathToTextsFile=payload.path_to_texts_file,
-            pathToSavefilesDir=payload.path_to_save_files_dir,
-            baseFilename=payload.base_filename
+        testAPI.deleteVoice(voiceID)
+        return Response(
+            status_code=status.HTTP_200_OK,
+            content={"message": "Voice deleted successfully"},
         )
-        return {"message": "Texts read successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.post("/use_voice/{voiceID}")
+async def use_voice(voiceID: str, text: str = Form(...)):
+    try:
+        audio = testAPI.readTexts(
+            text=text,
+            voice=voiceID,
+        )
+        id = engine.get_current_file_id(directory_name="deepfakes")
+        voiceName = testAPI.getNameByVoiceID(voiceID)
+        engine.upload_audio_file(
+            blob_name=f"{id}_{voiceName}_FAKE_11labs.mp3",
+            audio_df_file=audio,
+            blob_directory="deepfakes",
+        )
+        return Response(
+            status_code=status.HTTP_200_OK,
+            content={
+                "message": f"Text {id}_{voiceName}_FAKE_11labs.mp3 generated and saved successfully"
+            },
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from starlette import status
 from starlette.responses import Response
 
-from service.azure_client import AzureStorageClient
+from azure_client import AzureStorageClient
 
 router = APIRouter()
 
