@@ -5,11 +5,11 @@ from starlette import status
 from starlette.responses import Response
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 
-import generator.service.elevenLabsLogic as elevenLabsLogic
+import service.elevenLabsLogic as elevenLabsLogic
 from service.engine import Engine
 
 API_KEY = os.getenv("API_KEY")
-if API_KEY == "":
+if not API_KEY:
     raise Exception("ElevenLabs API_KEY not set")
 
 testAPI = elevenLabsLogic.ElevenLabsAPI(apiKey=API_KEY)

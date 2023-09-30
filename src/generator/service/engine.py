@@ -1,6 +1,6 @@
 import logging
 
-from azure_client import AzureStorageClient
+from service.azure_client import AzureStorageClient
 
 logger = logging.getLogger("generator")
 

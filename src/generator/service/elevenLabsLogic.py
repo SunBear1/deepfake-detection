@@ -1,8 +1,8 @@
 import requests
-import utils
 import os
 
 from elevenlabs import set_api_key, generate, clone, voices, save
+from service import utils
 
 
 class ElevenLabsAPI:
