@@ -3,10 +3,10 @@ import shutil
 
 from starlette import status
 from starlette.responses import Response
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 
-import elevenLabsLogic
-from engine import Engine
+import generator.service.elevenLabsLogic as elevenLabsLogic
+from service.engine import Engine
 
 API_KEY = os.getenv("API_KEY")
 if API_KEY == "":
@@ -14,17 +14,17 @@ if API_KEY == "":
 
 testAPI = elevenLabsLogic.ElevenLabsAPI(apiKey=API_KEY)
 
-app = FastAPI()
+router = APIRouter()
 
 engine = Engine()
 
 
-@app.post("/create_voice")
+@router.post("/voices")
 async def create_voice(file: UploadFile = File(...)):
     try:
-        directory = os.getcwd() + os.sep + file.filename.split(".")[0]
-        os.makedirs(directory, exist_ok=True)
-        new_filename = os.path.join(directory, file.filename)
+        file_path = os.getcwd() + os.sep + file.filename.split(".")[0]
+        os.makedirs(file_path, exist_ok=True)
+        new_filename = os.path.join(file_path, file.filename)
         file_bytes = file.file.read()
         with open(new_filename, "wb") as f:
             f.write(file_bytes)
@@ -38,10 +38,10 @@ async def create_voice(file: UploadFile = File(...)):
 
         testAPI.createOwnVoice(
             name=file.filename,
-            pathToVoicesDir=directory,
-            description=f"{file.filename}",
+            pathToVoicesDir=file_path,
+            description=file.filename,
         )
-        shutil.rmtree(directory)
+        shutil.rmtree(file_path)
 
         return Response(
             status_code=status.HTTP_201_CREATED,
@@ -51,8 +51,8 @@ async def create_voice(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/get_voices")
-async def list_voices():
+@router.get("/voices")
+async def voices():
     try:
         voices = testAPI.listVoices()
         return Response(status_code=status.HTTP_200_OK, content={"voices": voices})
@@ -60,19 +60,19 @@ async def list_voices():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/delete_voice/{voiceID}")
+@router.delete("/voice/{voiceID}")
 async def delete_voice(voiceID: str):
     try:
         testAPI.deleteVoice(voiceID)
         return Response(
-            status_code=status.HTTP_200_OK,
+            status_code=status.HTTP_204_NO_CONTENT,
             content={"message": "Voice deleted successfully"},
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/use_voice/{voiceID}")
+@router.put("/voice/{voiceID}")
 async def use_voice(voiceID: str, text: str = Form(...)):
     try:
         audio = testAPI.readTexts(

@@ -11,7 +11,7 @@ class ElevenLabsAPI:
         self.apiKey = apiKey
         self.voiceModel = "eleven_multilingual_v2"
 
-    def readTexts(self, text, voice):
+    def readTexts(self, text, voice) -> bytes:
         audio = generate(text=text, voice=voice, model=self.voiceModel)
         return audio
 
@@ -29,19 +29,13 @@ class ElevenLabsAPI:
                 return voice[1]
         return None
 
-    def setVoice(self, voice) -> None:
-        self.voice = voice
-
     def createOwnVoice(self, name, pathToVoicesDir, description) -> None:
-        voicesMP3s = utils.getMP3_from_dir(pathToVoicesDir)
+        voicesMP3s = utils.get_files_from_dir(pathToVoicesDir)
         self.voice = clone(
             name=name,
             description=description,
             files=voicesMP3s,
         )
-
-    def getVoice(self):
-        return self.voice
 
     def deleteVoice(self, voiceID: str) -> None:
         response = requests.delete(
