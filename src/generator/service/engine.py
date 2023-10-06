@@ -30,14 +30,14 @@ class Engine:
         self.azure_client.upload_file(container_name=container_name, blob_name=blob_path,
                                       audio_file=audio_df_file)
 
-    def get_current_file_id(self) -> str:
+    def get_current_file_id(self, directory_name: str) -> str:
         """
         Get current id of a file
         :return:
         """
         logger.info("Getting current file id")
         number_of_files = self.azure_client.count_files(container_name="deepfake-audio-dataset",
-                                                        directory_name="deepfakes") + 1
+                                                        directory_name=directory_name) + 1
         return f"{number_of_files:05}"
 
     def create_temp_mail_account(self):

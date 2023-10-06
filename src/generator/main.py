@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from endpoints.events import router as events_router
 from endpoints.healthcheck import router as healthcheck_router
+from endpoints.elevenLabsApi import router as elevenLabs_API
 
 URL_PREFIX = "/api/v1"
 
@@ -27,6 +28,7 @@ api_router = APIRouter()
 
 app.include_router(events_router, prefix=URL_PREFIX, tags=["Endpoints for event grid operations"])
 app.include_router(healthcheck_router, prefix=URL_PREFIX, tags=["Endpoints for healthcheck operations"])
+app.include_router(elevenLabs_API, prefix=URL_PREFIX, tags=["Endpoints for 11Labs operations"])
 app.include_router(api_router)
 
 logger = logging.getLogger("generator")
