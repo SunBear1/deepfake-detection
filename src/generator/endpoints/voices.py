@@ -36,6 +36,8 @@ async def create_voice(file: UploadFile = File(...)):
         description=file.filename,
     )
 
+    voice_id = eleven_labs_client.get_voice_id_by_name(voice_name=file.filename)
+
     engine.upload_audio_file(
         blob_name=f"{file_id}_{file.filename}_ORGN.mp3",
         audio_df_file=file_bytes,
@@ -46,7 +48,7 @@ async def create_voice(file: UploadFile = File(...)):
 
     return Response(
         status_code=status.HTTP_201_CREATED,
-        content=f"Voice {file.filename} created successfully",
+        content=f"Voice {file.filename} created successfully with ID {voice_id}",
     )
 
 
