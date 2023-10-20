@@ -4,6 +4,8 @@ import shutil
 from starlette import status
 from starlette.responses import Response, JSONResponse
 from fastapi import APIRouter, UploadFile, File, Form
+from pydantic import BaseModel
+
 
 from service.eleven_labs_client import ElevenLabsClient
 from service.engine import Engine
@@ -17,6 +19,11 @@ eleven_labs_client = ElevenLabsClient(apiKey=API_KEY)
 router = APIRouter()
 
 engine = Engine()
+
+
+class UseVoicePayload(BaseModel):
+    text: str
+    subdir: str
 
 
 @router.post("/voices")
@@ -36,7 +43,8 @@ async def create_voice(file: UploadFile = File(...)):
         description=file.filename,
     )
 
-    voice_id = eleven_labs_client.get_voice_id_by_name(voice_name=file.filename)
+    voice_id = eleven_labs_client.get_voice_id_by_name(
+        voice_name=file.filename)
 
     engine.upload_audio_file(
         blob_name=f"{file_id}_{file.filename}_ORGN.mp3",
@@ -68,17 +76,18 @@ async def delete_voice(voice_id: str):
 
 
 @router.put("/voice/{voice_id}")
-async def use_voice(voice_id: str, text: str = Form(...)):
+async def use_voice(voice_id: str, payload: UseVoicePayload):
     audio = eleven_labs_client.read_text(
-        text=text,
+        text=payload.text,
         voice=voice_id,
     )
     file_id = engine.get_current_file_id(directory_name="deepfakes")
     voice_name = eleven_labs_client.get_voice_name_by_id(voice_id)
+    filenameID = payload.subdir.replace(os.sep, '-')
     engine.upload_audio_file(
-        blob_name=f"{file_id}_{voice_name}_FAKE_11labs.mp3",
+        blob_name=f"{filenameID}_FAKE_11labs.mp3",
         audio_df_file=audio,
-        blob_directory="deepfakes",
+        blob_directory=f"deepfakes{os.sep}{payload.subdir[:-4]}",
     )
     return Response(
         status_code=status.HTTP_200_OK,

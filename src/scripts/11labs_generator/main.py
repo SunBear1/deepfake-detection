@@ -1,5 +1,8 @@
 import os
 from pydub import AudioSegment
+import soundfile as sf
+import numpy as np
+from time import sleep
 
 import requests
 
@@ -15,6 +18,17 @@ def prepare_text_file(path_to_file: str) -> str:
     without_idx_number = [element.split(" ", 1)[1] for element in with_ending_character]
     return " ".join(without_idx_number)
 
+def prepare_text_file_V2(path_to_file: str) -> str:
+    parts_pairs = []
+    with open(path_to_file, 'r') as file:
+        for line in file:
+            parts = line.strip().split(' ', 1)
+            if len(parts) == 2:
+                number, text = parts
+                number = number.replace('-', '/') 
+                print(number)
+                parts_pairs.append((number, text))
+    return parts_pairs
 
 def create_new_voice(path_to_voice_file: str) -> str:
     print(f"Creating a clone of a voice from file {path_to_voice_file}")
@@ -40,14 +54,15 @@ def delete_old_voice(old_voice_id: str) -> None:
     print(f"Voice with id {old_voice_id} deleted successfully")
 
 
-def generate_deepfake_from_existing_voice(voice_id: str, text: str) -> None:
+def generate_deepfake_from_existing_voice(voice_id: str, subdir: str, text: str) -> None:
     print(f"Generating deepfake from voice with id: {voice_id}")
     response = requests.put(
         url=f"{URL}/voice/{voice_id}",
-        data={"text": text},
+        json={"subdir":subdir, "text": text},
     )
     if response.status_code != 200:
-        raise Exception(f"Error occurred during generating deepfake from voice with id {voice_id}. Error: {response}")
+        print(f"Error occurred during generating deepfake from voice with id {voice_id}. Error: {response}")
+        sleep(15)
     print(f"Deepfake from voice with id {voice_id} generated successfully. Voice has been saved in Azure storage "
           f"container.")
 
@@ -58,33 +73,35 @@ def merge_flac_files(directory_path, output_file):
         print(f"No FLAC files found in {directory_path}.")
         return
     
-    combined = AudioSegment.empty()
-    
+    audio_data = []
     for file in flac_files:
         audio_path = os.path.join(directory_path, file)
-        audio = AudioSegment.from_file(audio_path, format="flac")
-        combined += audio
+        data, sample_rate = sf.read(audio_path)
+        audio_data.append(data)
     
-    combined.export(output_file, format="flac")
+    concatenated_audio = np.concatenate(audio_data)
+    sf.write(output_file, concatenated_audio, sample_rate)
     print(f"Merged {len(flac_files)} FLAC files into {output_file}.")
 
 if __name__ == "__main__":
-    PATH_TO_SOURCES_DI0RECTORY = r"C:\Users\kubas\Downloads\LibriSpeech_notprocessed\LibriSpeech\dev-clean"
-    # wchodzę do 1 directory np pierwsze losowe liczby
+    PATH_TO_SOURCES_DI0RECTORY = "<INSERT PATH HERE>"
     for dir in os.listdir(PATH_TO_SOURCES_DI0RECTORY):
         dir = PATH_TO_SOURCES_DI0RECTORY + os.sep + dir
         if os.path.isdir(dir):
-            # wchodzę do drugiego directory np 2130
             for subdir in os.listdir(dir):
                 subdir = dir + os.sep + subdir
-                # Generowanie flac mergea:
                 for file in os.listdir(subdir):
                     if file.endswith(".txt"):
                         print(f"Processing file: {file}")
-                        combinedFlacFile = subdir + os.sep + "MERGED_" + file.replace('.trans.txt', '.flac')
-                        merge_flac_files(subdir,subdir + combinedFlacFile)
-                        text_to_speak = prepare_text_file(path_to_file=os.path.join(subdir, file))
+                        combinedFlacFileMerged = subdir + os.sep + "MERGED_" + file.replace('.trans.txt', '.flac')
+                        merge_flac_files(directory_path=subdir, output_file=combinedFlacFileMerged)
+                        text_to_speak_pairs = prepare_text_file_V2(path_to_file=os.path.join(subdir, file))
                         created_voice_id = create_new_voice(
-                            path_to_voice_file=os.path.join(combinedFlacFile, file.replace('.trans.txt', '.flac')))
-                        generate_deepfake_from_existing_voice(voice_id=created_voice_id, text=text_to_speak)
+                            path_to_voice_file=combinedFlacFileMerged)
+                        for text_chunk in text_to_speak_pairs:
+                            print(text_chunk)
+                            generate_deepfake_from_existing_voice(voice_id=created_voice_id, subdir=text_chunk[0] , text=text_chunk[1])
+                            sleep(1.5)
                         delete_old_voice(old_voice_id=created_voice_id)
+                        os.remove(combinedFlacFileMerged)
+                        print(f"{combinedFlacFileMerged} has been successfully deleted.")
