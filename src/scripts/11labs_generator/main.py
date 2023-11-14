@@ -9,6 +9,7 @@ import requests
 
 PATH_TO_SOURCES_DIRECTORY = os.getenv("PATH_TO_SOURCES")
 URL = "http://projektbadawczyserver.eastus2.cloudapp.azure.com/api/v1"
+URL2 = "https://api.elevenlabs.io/v1"
 
 
 def prepare_text_file(path_to_file: str) -> str:
@@ -36,14 +37,17 @@ def prepare_text_file_by_parts_pairs(path_to_file: str) -> List[Tuple[str, str]]
 def create_new_voice(path_to_voice_file: str) -> str:
     print(f"Creating a clone of a voice from file {path_to_voice_file}")
     response = requests.post(
-        url=f"{URL}/voices",
+        url=f"{URL2}/voices/add",
         files={"file": open(path_to_voice_file, "rb")},
+        data={"name": path_to_voice_file.split(os.sep)[-1]},
+        headers={"xi-api-key": "cda54a7eb8c234e10da1b7efe61c24c9"}
     )
-    if response.status_code != 201:
+    if response.status_code != 200:
         raise Exception(f"Error occurred during creating a clone of a voice from file {path_to_voice_file}. "
                         f"Error: {response}")
     voice_id = response.content.decode("utf-8").split(" ")[-1]
     print(f"Voice {path_to_voice_file} created successfully with ID {voice_id}")
+    print(f"Voice {path_to_voice_file} created successfully with code {response.status_code}")
     return voice_id
 
 
@@ -89,7 +93,7 @@ def merge_flac_files(directory_path, output_file):
 
 
 if __name__ == "__main__":
-    PATH_TO_SOURCES_DI0RECTORY = "<INSERT PATH HERE>"
+    PATH_TO_SOURCES_DI0RECTORY = r"C:\\Users\\kubas\\Desktop\\LibriSpeech_notprocessed\\LibriSpeech\\dev-clean"
     for _dir in os.listdir(PATH_TO_SOURCES_DI0RECTORY):
         _dir = PATH_TO_SOURCES_DI0RECTORY + os.sep + _dir
         if os.path.isdir(_dir):
